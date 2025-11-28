@@ -1,0 +1,14 @@
+Hello {firstname} {lastname},
+
+Reminder: payment by bank transfer pending for order {order_name}.
+
+{urgency_badge}
+
+Amount to transfer: {total_paid}
+Account holder: {bankwire_owner}
+Account / IBAN: {bankwire_details}
+Bank address: {bankwire_address}
+
+Very important: please include the order reference {order_name} in the payment note.
+
+Merci, {shop_name}

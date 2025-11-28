@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <title>Recordatorio: transferencia pendiente</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style type="text/css">
+    #outlook a { padding:0; }
+    body { margin:0; padding:0; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#eeeeee; }
+    table, td { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    img { border:0; height:auto; line-height:100%; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+    p { display:block; margin:13px 0; }
+    a { color:#25B9D7; text-decoration:none; font-weight:600; }
+
+    .wrapper { max-width:604px; margin:0 auto; }
+    .shadow { box-shadow:0 20px 30px 0 rgba(0,0,0,0.1); border-radius:4px; }
+    .btn { display:inline-block; padding:14px 22px; border-radius:6px; background:#25B9D7; color:#ffffff !important; font-weight:700; }
+    .btn-secondary { background:#363A41; }
+    .kpi { font-size:18px; font-weight:700; color:#363A41; }
+    .muted { color:#7a7a7a; }
+    .badge { display:inline-block; background:#FFF3CD; color:#7A5A00; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.3px; }
+    .separator { border-top:3px solid #505050; width:25px; margin:0 auto; }
+    .checklist li{ margin-bottom:6px; }
+
+    @media only screen and (max-width:240px){
+      .no-bg { background-color:#ffffff !important; }
+      .stack { display:block !important; width:100% !important; }
+      .center { text-align:center !important; }
+      .btn { width:100% !important; text-align:center !important; }
+    }
+  </style>
+  <!--[if !mso]><!-->
+  <style type="text/css">
+    @import url(https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700);
+    body, td, div { font-family:'Open Sans', Arial, sans-serif; }
+  </style>
+  <!--<![endif]-->
+</head>
+<body bgcolor="#eeeeee" style="word-spacing:normal;">
+  <!-- Subject sugerido: "Último paso para enviar tu pedido {order_name} — reserva vigente 24 h" -->
+
+  <div class="wrapper">
+    <table role="presentation" width="100%" bgcolor="#ffffff" class="shadow" style="background:#ffffff;">
+      <tr>
+        <td style="padding:40px 25px 20px 25px; text-align:center;">
+          <a href="{shop_url}"><img src="{shop_logo}" alt="{shop_name}" width="150" style="display:block;margin:0 auto;max-width:150px;width:100%;"></a>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 25px 10px 25px;">
+          <div class="separator"></div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 25px 10px 25px;">
+          <h1 style="margin:0;font-size:22px;line-height:28px;color:#363A41;">Hola {firstname} {lastname},</h1>
+          <p style="font-size:16px;line-height:24px;color:#363A41; margin-top:8px;">tenemos tu pedido <strong>{order_name}</strong> listo para enviar. Solo falta <strong>confirmar la transferencia bancaria</strong>.</p>
+          <p class="badge">{urgency_badge}</p>
+        </td>
+      </tr>
+
+      <!-- Caja clave con sesgo de escasez/urgencia -->
+      <tr>
+        <td style="padding:10px 25px 0 25px;">
+          <table role="presentation" width="100%" style="border:1px solid #DFDFDF; border-radius:6px; background:#FEFEFE;">
+            <tr>
+              <td style="padding:15px 20px;">
+                <p style="margin:0 0 8px 0; font-size:14px; line-height:22px; color:#363A41;">
+                  Para garantizar tu compra, realiza la transferencia cuanto antes. Los productos de tu carrito tienen <strong>alta demanda</strong> y solo podemos mantener la reserva <strong>hasta 24&nbsp;horas</strong> desde la fecha del pedido.
+                </p>
+                <p style="margin:0; font-size:14px; line-height:22px; color:#7a7a7a;">Si el pago no se confirma en ese plazo, el stock podría liberarse automáticamente.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Datos de pago -->
+      <tr>
+        <td style="padding:20px 25px 0 25px;">
+          <p class="kpi" style="margin:0 0 6px 0;">Importe a transferir: {total_paid}</p>
+          <p style="margin:0 0 4px 0; font-size:15px; color:#363A41;"><strong>Titular:</strong> {bankwire_owner}</p>
+          <p style="margin:0 0 4px 0; font-size:15px; color:#363A41;"><strong>Cuenta / IBAN:</strong> {bankwire_details}</p>
+          <p style="margin:0 0 12px 0; font-size:15px; color:#363A41;"><strong>Dirección bancaria:</strong> {bankwire_address}</p>
+          <p style="margin:0; font-size:14px; color:#363A41;">Muy importante: indica la <strong>referencia del pedido {order_name}</strong> en el concepto.</p>
+        </td>
+      </tr>
+
+      <!-- CTA principal -->
+      <tr>
+        <td style="padding:22px 25px 0 25px; text-align:center;">
+          <a href="{history_url}" class="btn">He realizado la transferencia</a>
+        </td>
+      </tr>
+
+      <!-- Beneficios (aversión a la pérdida / prueba social ligera) -->
+      <tr>
+        <td style="padding:22px 25px 0 25px;">
+          <table role="presentation" width="100%" style="border:1px solid #DFDFDF; border-radius:6px; background:#FEFEFE;">
+            <tr>
+              <td style="padding:16px 20px;">
+                <p style="margin:0 0 8px 0; font-size:15px; color:#363A41; font-weight:700;">¿Por qué hacerlo ahora?</p>
+                <ul class="checklist" style="padding-left:18px; margin:0; font-size:14px; line-height:22px; color:#363A41;">
+                  <li><strong>Envío prioritario:</strong> preparamos tu paquete en cuanto recibimos el justificante.</li>
+                  <li><strong>Reserva garantizada:</strong> evitamos roturas de stock en artículos muy demandados.</li>
+                  <li><strong>Sin esperas:</strong> podrás descargar la factura desde tu cuenta al confirmarse el pago.</li>
+                </ul>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Accesos cuenta / invitado -->
+      <tr>
+        <td style="padding:22px 25px 0 25px;">
+          <p style="margin:0 0 6px 0; font-size:14px; line-height:22px; color:#363A41;">Sigue tu pedido y descarga tu factura desde <a href="{history_url}">Historial y detalles de mis pedidos</a> en tu cuenta.</p>
+          <p style="margin:0; font-size:14px; line-height:22px; color:#363A41;">¿Compraste como invitado? Usa <a href="{guest_tracking_url}">Seguimiento de pedido</a> para ver el estado.</p>
+        </td>
+      </tr>
+
+      <!-- Ayuda / confianza -->
+      <tr>
+        <td style="padding:20px 25px 0 25px;">
+          <p class="muted" style="margin:0; font-size:12px; line-height:20px;">Si ya realizaste la transferencia, ignora este mensaje. De lo contrario, este es un recordatorio amistoso para evitar retrasos o la liberación del stock.</p>
+        </td>
+      </tr>
+
+      <!-- CTA secundario -->
+      <tr>
+        <td style="padding:16px 25px 25px 25px; text-align:center;">
+          <a href="https://muebledesign.es/es/contactanos" class="btn btn-secondary" style="margin-right:8px;">¿Dudas? Escríbenos</a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Footer -->
+    <table role="presentation" width="100%" style="max-width:604px; margin:0 auto;">
+      <tr>
+        <td style="padding:18px 10px 30px 10px; text-align:center;">
+          <p style="margin:0; font-size:14px; color:#656565;">
+            <a href="{shop_url}" style="color:#656565; text-decoration:underline; font-weight:600;">{shop_name}</a>
+          </p>
+          <p style="margin:6px 0 0 0; font-size:12px; color:#656565;">Powered by <a href="https://www.prestashop-project.org/" style="color:#656565;">PrestaShop</a></p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

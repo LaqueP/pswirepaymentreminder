@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <title>Herinnering: openstaande bankoverschrijving</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style type="text/css">
+    #outlook a { padding:0; }
+    body { margin:0; padding:0; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#eeeeee; }
+    table, td { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    img { border:0; height:auto; line-height:100%; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+    p { display:block; margin:13px 0; }
+    a { color:#25B9D7; text-decoration:none; font-weight:600; }
+
+    .wrapper { max-width:604px; margin:0 auto; }
+    .shadow { box-shadow:0 20px 30px 0 rgba(0,0,0,0.1); border-radius:4px; }
+    .btn { display:inline-block; padding:14px 22px; border-radius:6px; background:#25B9D7; color:#ffffff !important; font-weight:700; }
+    .btn-secondary { background:#363A41; }
+    .kpi { font-size:18px; font-weight:700; color:#363A41; }
+    .muted { color:#7a7a7a; }
+    .badge { display:inline-block; background:#FFF3CD; color:#7A5A00; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.3px; }
+    .separator { border-top:3px solid #505050; width:25px; margin:0 auto; }
+    .checklist li{ margin-bottom:6px; }
+
+    @media only screen and (max-width:240px){
+      .no-bg { background-color:#ffffff !important; }
+      .stack { display:block !important; width:100% !important; }
+      .center { text-align:center !important; }
+      .btn { width:100% !important; text-align:center !important; }
+    }
+  </style>
+  <!--[if !mso]><!-->
+  <style type="text/css">
+    @import url(https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700);
+    body, td, div { font-family:'Open Sans', Arial, sans-serif; }
+  </style>
+  <!--<![endif]-->
+</head>
+<body bgcolor="#eeeeee" style="word-spacing:normal;">
+  <!-- Voorgestelde onderwerpregel: "Laatste stap om uw bestelling {order_name} te verzenden — reservering 24 u geldig" -->
+
+  <div class="wrapper">
+    <table role="presentation" width="100%" bgcolor="#ffffff" class="shadow" style="background:#ffffff;">
+      <tr>
+        <td style="padding:40px 25px 20px 25px; text-align:center;">
+          <a href="{shop_url}"><img src="{shop_logo}" alt="{shop_name}" width="150" style="display:block;margin:0 auto;max-width:150px;width:100%;"></a>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 25px 10px 25px;">
+          <div class="separator"></div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 25px 10px 25px;">
+          <h1 style="margin:0;font-size:22px;line-height:28px;color:#363A41;">Hallo {firstname} {lastname},</h1>
+          <p style="font-size:16px;line-height:24px;color:#363A41; margin-top:8px;">we hebben uw bestelling <strong>{order_name}</strong> klaar voor verzending. We hebben alleen nog <strong>uw bevestiging van de bankoverschrijving</strong> nodig.</p>
+          <p class="badge">{urgency_badge}</p>
+        </td>
+      </tr>
+
+      <!-- Belangrijk kader met schaarste-/urgentieboodschap -->
+      <tr>
+        <td style="padding:10px 25px 0 25px;">
+          <table role="presentation" width="100%" style="border:1px solid #DFDFDF; border-radius:6px; background:#FEFEFE;">
+            <tr>
+              <td style="padding:15px 20px;">
+                <p style="margin:0 0 8px 0; font-size:14px; line-height:22px; color:#363A41;">
+                  Om uw aankoop te garanderen, maak de overboeking alstublieft zo snel mogelijk. De artikelen in uw winkelwagen zijn <strong>sterk in trek</strong> en we kunnen de reservering <strong>slechts tot 24&nbsp;uur</strong> na de besteldatum aanhouden.
+                </p>
+                <p style="margin:0; font-size:14px; line-height:22px; color:#7a7a7a;">Als de betaling niet binnen deze periode wordt bevestigd, kan de voorraad automatisch worden vrijgegeven.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Payment details -->
+      <tr>
+        <td style="padding:20px 25px 0 25px;">
+          <p class="kpi" style="margin:0 0 6px 0;">Over te maken bedrag: {total_paid}</p>
+          <p style="margin:0 0 4px 0; font-size:15px; color:#363A41;"><strong>Rekeninghouder:</strong> {bankwire_owner}</p>
+          <p style="margin:0 0 4px 0; font-size:15px; color:#363A41;"><strong>Rekening / IBAN:</strong> {bankwire_details}</p>
+          <p style="margin:0 0 12px 0; font-size:15px; color:#363A41;"><strong>Bankadres:</strong> {bankwire_address}</p>
+          <p style="margin:0; font-size:14px; color:#363A41;">Belangrijk: vermeld de <strong>bestelreferentie {order_name}</strong> in de omschrijving van de betaling.</p>
+        </td>
+      </tr>
+
+      <!-- Primary CTA -->
+      <tr>
+        <td style="padding:22px 25px 0 25px; text-align:center;">
+          <a href="{history_url}" class="btn">Ik heb de overboeking gedaan</a>
+        </td>
+      </tr>
+
+      <!-- Benefits (loss aversion / light social proof) -->
+      <tr>
+        <td style="padding:22px 25px 0 25px;">
+          <table role="presentation" width="100%" style="border:1px solid #DFDFDF; border-radius:6px; background:#FEFEFE;">
+            <tr>
+              <td style="padding:16px 20px;">
+                <p style="margin:0 0 8px 0; font-size:15px; color:#363A41; font-weight:700;">Waarom nu handelen?</p>
+                <ul class="checklist" style="padding-left:18px; margin:0; font-size:14px; line-height:22px; color:#363A41;">
+                  <li><strong>Prioritaire verzending:</strong> we maken uw pakket klaar zodra we het betalingsbewijs ontvangen.</li>
+                  <li><strong>Reservering gegarandeerd:</strong> voorkom uitverkoop bij artikelen met hoge vraag.</li>
+                  <li><strong>Geen wachttijd:</strong> download uw factuur via uw account zodra de betaling is bevestigd.</li>
+                </ul>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Account / guest access -->
+      <tr>
+        <td style="padding:22px 25px 0 25px;">
+          <p style="margin:0 0 6px 0; font-size:14px; line-height:22px; color:#363A41;">Volg uw bestelling en download uw factuur via <a href="{history_url}">Bestelgeschiedenis en details</a> in uw account.</p>
+          <p style="margin:0; font-size:14px; line-height:22px; color:#363A41;">Als gast afgerekend? Gebruik <a href="{guest_tracking_url}">Gasttracking</a> om de status te bekijken.</p>
+        </td>
+      </tr>
+
+      <!-- Help / trust -->
+      <tr>
+        <td style="padding:20px 25px 0 25px;">
+          <p class="muted" style="margin:0; font-size:12px; line-height:20px;">Als u de overboeking al heeft gedaan, kunt u dit bericht negeren. Anders is dit een vriendelijke herinnering om vertragingen of het vrijgeven van voorraad te voorkomen.</p>
+        </td>
+      </tr>
+
+      <!-- Secondary CTA -->
+      <tr>
+        <td style="padding:16px 25px 25px 25px; text-align:center;">
+          <a href="https://mobelarium.de/nl/neem-contact-op" class="btn btn-secondary" style="margin-right:8px;">Vragen? Schrijf ons</a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Footer -->
+    <table role="presentation" width="100%" style="max-width:604px; margin:0 auto;">
+      <tr>
+        <td style="padding:18px 10px 30px 10px; text-align:center;">
+          <p style="margin:0; font-size:14px; color:#656565;">
+            <a href="{shop_url}" style="color:#656565; text-decoration:underline; font-weight:600;">{shop_name}</a>
+          </p>
+          <p style="margin:6px 0 0 0; font-size:12px; color:#656565;">Aangedreven door <a href="https://www.prestashop-project.org/" style="color:#656565;">PrestaShop</a></p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

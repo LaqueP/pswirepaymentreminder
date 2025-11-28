@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <title>Påminnelse: väntande banköverföring</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style type="text/css">
+    #outlook a { padding:0; }
+    body { margin:0; padding:0; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#eeeeee; }
+    table, td { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    img { border:0; height:auto; line-height:100%; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+    p { display:block; margin:13px 0; }
+    a { color:#25B9D7; text-decoration:none; font-weight:600; }
+
+    .wrapper { max-width:604px; margin:0 auto; }
+    .shadow { box-shadow:0 20px 30px 0 rgba(0,0,0,0.1); border-radius:4px; }
+    .btn { display:inline-block; padding:14px 22px; border-radius:6px; background:#25B9D7; color:#ffffff !important; font-weight:700; }
+    .btn-secondary { background:#363A41; }
+    .kpi { font-size:18px; font-weight:700; color:#363A41; }
+    .muted { color:#7a7a7a; }
+    .badge { display:inline-block; background:#FFF3CD; color:#7A5A00; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.3px; }
+    .separator { border-top:3px solid #505050; width:25px; margin:0 auto; }
+    .checklist li{ margin-bottom:6px; }
+
+    @media only screen and (max-width:240px){
+      .no-bg { background-color:#ffffff !important; }
+      .stack { display:block !important; width:100% !important; }
+      .center { text-align:center !important; }
+      .btn { width:100% !important; text-align:center !important; }
+    }
+  </style>
+  <!--[if !mso]><!-->
+  <style type="text/css">
+    @import url(https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700);
+    body, td, div { font-family:'Open Sans', Arial, sans-serif; }
+  </style>
+  <!--<![endif]-->
+</head>
+<body bgcolor="#eeeeee" style="word-spacing:normal;">
+  <!-- Föreslagen ämnesrad: "Sista steget för att skicka din beställning {order_name} — reservation giltig i 24 h" -->
+
+  <div class="wrapper">
+    <table role="presentation" width="100%" bgcolor="#ffffff" class="shadow" style="background:#ffffff;">
+      <tr>
+        <td style="padding:40px 25px 20px 25px; text-align:center;">
+          <a href="{shop_url}"><img src="{shop_logo}" alt="{shop_name}" width="150" style="display:block;margin:0 auto;max-width:150px;width:100%;"></a>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 25px 10px 25px;">
+          <div class="separator"></div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 25px 10px 25px;">
+          <h1 style="margin:0;font-size:22px;line-height:28px;color:#363A41;">Hej {firstname} {lastname},</h1>
+          <p style="font-size:16px;line-height:24px;color:#363A41; margin-top:8px;">vi har din beställning <strong>{order_name}</strong> redo att skickas. Vi behöver bara att du <strong>bekräftar banköverföringen</strong>.</p>
+          <p class="badge">{urgency_badge}</p>
+        </td>
+      </tr>
+
+      <!-- Key box with scarcity/urgency bias -->
+      <tr>
+        <td style="padding:10px 25px 0 25px;">
+          <table role="presentation" width="100%" style="border:1px solid #DFDFDF; border-radius:6px; background:#FEFEFE;">
+            <tr>
+              <td style="padding:15px 20px;">
+                <p style="margin:0 0 8px 0; font-size:14px; line-height:22px; color:#363A41;">
+                  För att säkra ditt köp, gör överföringen så snart som möjligt. Varorna i din varukorg är <strong>mycket efterfrågade</strong> och vi kan bara behålla reservationen <strong>i upp till 24&nbsp;timmar</strong> från orderdatumet.
+                </p>
+                <p style="margin:0; font-size:14px; line-height:22px; color:#7a7a7a;">Om betalningen inte bekräftas inom den perioden kan lagret frigöras automatiskt.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Payment details -->
+      <tr>
+        <td style="padding:20px 25px 0 25px;">
+          <p class="kpi" style="margin:0 0 6px 0;">Belopp att överföra: {total_paid}</p>
+          <p style="margin:0 0 4px 0; font-size:15px; color:#363A41;"><strong>Kontoinnehavare:</strong> {bankwire_owner}</p>
+          <p style="margin:0 0 4px 0; font-size:15px; color:#363A41;"><strong>Konto / IBAN:</strong> {bankwire_details}</p>
+          <p style="margin:0 0 12px 0; font-size:15px; color:#363A41;"><strong>Bankadress:</strong> {bankwire_address}</p>
+          <p style="margin:0; font-size:14px; color:#363A41;">Viktigt: ange <strong>orderreferensen {order_name}</strong> i betalningens meddelandefält.</p>
+        </td>
+      </tr>
+
+      <!-- Primary CTA -->
+      <tr>
+        <td style="padding:22px 25px 0 25px; text-align:center;">
+          <a href="{history_url}" class="btn">Jag har gjort överföringen</a>
+        </td>
+      </tr>
+
+      <!-- Benefits (loss aversion / light social proof) -->
+      <tr>
+        <td style="padding:22px 25px 0 25px;">
+          <table role="presentation" width="100%" style="border:1px solid #DFDFDF; border-radius:6px; background:#FEFEFE;">
+            <tr>
+              <td style="padding:16px 20px;">
+                <p style="margin:0 0 8px 0; font-size:15px; color:#363A41; font-weight:700;">Varför göra det nu?</p>
+                <ul class="checklist" style="padding-left:18px; margin:0; font-size:14px; line-height:22px; color:#363A41;">
+                  <li><strong>Prioriterad leverans:</strong> vi förbereder ditt paket så snart vi får betalningskvittot.</li>
+                  <li><strong>Säkrad reservation:</strong> undvik slutsålda varor med hög efterfrågan.</li>
+                  <li><strong>Ingen väntan:</strong> ladda ner din faktura från ditt konto när betalningen har bekräftats.</li>
+                </ul>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Account / guest access -->
+      <tr>
+        <td style="padding:22px 25px 0 25px;">
+          <p style="margin:0 0 6px 0; font-size:14px; line-height:22px; color:#363A41;">Spåra din beställning och ladda ner din faktura från <a href="{history_url}">Orderhistorik och detaljer</a> i ditt konto.</p>
+          <p style="margin:0; font-size:14px; line-height:22px; color:#363A41;">Köpte du som gäst? Använd <a href="{guest_tracking_url}">Gästspårning</a> för att se status.</p>
+        </td>
+      </tr>
+
+      <!-- Help / trust -->
+      <tr>
+        <td style="padding:20px 25px 0 25px;">
+          <p class="muted" style="margin:0; font-size:12px; line-height:20px;">Om du redan har gjort överföringen kan du ignorera detta meddelande. Annars är detta en vänlig påminnelse för att undvika förseningar eller att lagret frigörs.</p>
+        </td>
+      </tr>
+
+      <!-- Secondary CTA -->
+      <tr>
+        <td style="padding:16px 25px 25px 25px; text-align:center;">
+          <a href="https://mobelarium.de/sv/kontakta-oss" class="btn btn-secondary" style="margin-right:8px;">Frågor? Skriv till oss</a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Footer -->
+    <table role="presentation" width="100%" style="max-width:604px; margin:0 auto;">
+      <tr>
+        <td style="padding:18px 10px 30px 10px; text-align:center;">
+          <p style="margin:0; font-size:14px; color:#656565;">
+            <a href="{shop_url}" style="color:#656565; text-decoration:underline; font-weight:600;">{shop_name}</a>
+          </p>
+          <p style="margin:6px 0 0 0; font-size:12px; color:#656565;">Drivs av <a href="https://www.prestashop-project.org/" style="color:#656565;">PrestaShop</a></p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS `_DB_PREFIX_pswpr_reminder` (
+  `id_order` INT UNSIGNED NOT NULL,
+  `sent_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

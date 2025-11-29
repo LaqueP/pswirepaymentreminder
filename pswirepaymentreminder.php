@@ -13,6 +13,7 @@
  * - Inyección de variables en plantilla con prioridad a la config del módulo (fallback a ps_wirepayment)
  * - Estado posterior al envío (configurable)
  * - Pestaña para envío manual de recordatorios desde el BO
+ * - Límite de fecha (hasta la fecha incluida) para la cron por tienda
  *
  * Compatible con PrestaShop 8.x
  */
@@ -34,12 +35,14 @@ class Pswirepaymentreminder extends Module
     const CFG_BW_ADDRESS   = 'PSWPR_BW_ADDRESS';    // string multilínea
     // Estado al que pasar tras enviar recordatorio (opcional)
     const CFG_AFTER_STATE  = 'PSWPR_AFTER_STATE';   // int
+    // Fecha límite superior (hasta la fecha incluida) para cron automática (YYYY-MM-DD, '' = sin límite)
+    const CFG_MAX_DATE     = 'PSWPR_MAX_DATE';
 
     public function __construct()
     {
         $this->name = 'pswirepaymentreminder';
         $this->tab = 'emailing';
-        $this->version = '1.3.2';
+        $this->version = '1.3.3';
         $this->author = 'Desarrollador de módulos de Prestashop';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -48,7 +51,7 @@ class Pswirepaymentreminder extends Module
         parent::__construct();
 
         $this->displayName = $this->l('Wire Payment Reminder');
-        $this->description = $this->l('Envía recordatorios de transferencia, con urgencia traducible, multitienda, vista previa, cron por tienda, cambio de estado posterior y envío manual.');
+        $this->description = $this->l('Envía recordatorios de transferencia, con urgencia traducible, multitienda, vista previa, cron por tienda, cambio de estado posterior, envío manual y límite de fecha.');
     }
 
     /* =======================================
@@ -90,6 +93,9 @@ class Pswirepaymentreminder extends Module
         // Token por tienda
         Configuration::updateValue(self::CFG_TOKEN, bin2hex(random_bytes(16)), false, null, $idShop);
 
+        // Fecha límite por defecto (vacía = sin límite)
+        Configuration::updateValue(self::CFG_MAX_DATE, '', false, null, $idShop);
+
         // SQL (opcional)
         if (!$this->installSql()) {
             return false;
@@ -125,6 +131,7 @@ class Pswirepaymentreminder extends Module
         Configuration::deleteByName(self::CFG_BW_DETAILS);
         Configuration::deleteByName(self::CFG_BW_ADDRESS);
         Configuration::deleteByName(self::CFG_AFTER_STATE);
+        Configuration::deleteByName(self::CFG_MAX_DATE);
 
         return parent::uninstall();
     }
@@ -337,6 +344,26 @@ class Pswirepaymentreminder extends Module
             $this->updateValueByContext(self::CFG_BW_DETAILS, $bwDetails, false);
             $this->updateValueByContext(self::CFG_BW_ADDRESS, $bwAddress, false);
 
+            // Guardar fecha límite (hasta esa fecha incluida). Formato YYYY-MM-DD, vacío = sin límite.
+            $maxDatePost = Tools::getValue(self::CFG_MAX_DATE, null); // null si no viene en POST
+            $readShopId  = $this->getFormReadShopId();
+            if ($maxDatePost === null) {
+                $maxDate = (string)Configuration::get(self::CFG_MAX_DATE, null, null, $readShopId);
+            } else {
+                $maxDatePost = trim((string)$maxDatePost);
+                if ($maxDatePost === '') {
+                    $maxDate = '';
+                } else {
+                    if (\Validate::isDate($maxDatePost)) {
+                        $maxDate = substr($maxDatePost, 0, 10); // normaliza a AAAA-MM-DD
+                    } else {
+                        $maxDate = (string)Configuration::get(self::CFG_MAX_DATE, null, null, $readShopId);
+                        $this->warnings[] = $this->l('La fecha límite no tiene un formato válido (AAAA-MM-DD). Se ha ignorado el cambio.');
+                    }
+                }
+            }
+            $this->updateValueByContext(self::CFG_MAX_DATE, $maxDate, false);
+
             // Guardar token (solo editable en contexto tienda concreta)
             if (!Shop::isFeatureActive() || Shop::getContext() === Shop::CONTEXT_SHOP) {
                 $idShopCtx = (int)$this->context->shop->id;
@@ -406,6 +433,13 @@ class Pswirepaymentreminder extends Module
                         'desc'  => $this->l('Número de horas desde la creación del pedido para enviar el recordatorio.'),
                     ],
                     [
+                        'type'  => 'date', // si tu BO legacy no pinta date, cambiar a 'text' + 'class' => 'datepicker'
+                        'label' => $this->l('Fecha límite (cron)'),
+                        'name'  => self::CFG_MAX_DATE,
+                        'class' => 'fixed-width-lg',
+                        'desc'  => $this->l('La cron solo revisará pedidos creados hasta esta fecha (incluida). AAAA-MM-DD. Déjalo vacío para no limitar.'),
+                    ],
+                    [
                         'type'  => 'select',
                         'label' => $this->l('Estado tras enviar el recordatorio'),
                         'name'  => self::CFG_AFTER_STATE,
@@ -471,19 +505,16 @@ class Pswirepaymentreminder extends Module
         ];
 
         // === Link directo a la pestaña de envío manual (por si el menú tarda en refrescarse) ===
-// Dentro de renderForm(), donde creas $manualLink:
-$manualLink = $this->context->link->getAdminLink('AdminPswirepaymentreminderManual', true, [], ['reset_filter' => 1]);
-
-$manualBlock = '<a class="btn btn-default" href="'.htmlspecialchars($manualLink).'" target="_blank">
+        $manualLink = $this->context->link->getAdminLink('AdminPswirepaymentreminderManual', true, [], ['reset_filter' => 1]);
+        $manualBlock = '<a class="btn btn-default" href="'.htmlspecialchars($manualLink).'" target="_blank">
   <i class="icon-envelope"></i> '.$this->l('Abrir envío manual').'</a>';
 
-$fields_form['form']['input'][] = [
-    'type'  => 'free',
-    'label' => $this->l('Envío manual'),
-    'name'  => 'PSWPR_MANUAL_LINK',
-    'desc'  => $manualBlock,
-];
-
+        $fields_form['form']['input'][] = [
+            'type'  => 'free',
+            'label' => $this->l('Envío manual'),
+            'name'  => 'PSWPR_MANUAL_LINK',
+            'desc'  => $manualBlock,
+        ];
 
         // Helper
         $helper = new HelperForm();
@@ -517,6 +548,10 @@ $fields_form['form']['input'][] = [
 
         $helper->fields_value[self::CFG_HOURS]       = (int)Configuration::get(self::CFG_HOURS, null, null, $idShopRead);
         $helper->fields_value[self::CFG_AFTER_STATE] = (int)Configuration::get(self::CFG_AFTER_STATE, null, null, $idShopRead);
+
+        // Fecha límite
+        $helper->fields_value[self::CFG_MAX_DATE] =
+            (string)Configuration::get(self::CFG_MAX_DATE, null, null, $idShopRead);
 
         // Urgencia multilenguaje (forma correcta para HelperForm: array por id_lang)
         $defaultUrg = $this->l('Reserva de artículos activa durante {hours} horas');

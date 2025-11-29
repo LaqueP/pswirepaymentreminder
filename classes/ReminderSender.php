@@ -34,7 +34,7 @@ class ReminderSender
 
     /**
      * Procesa envíos:
-     * - Si $idsOrders es null → modo automático (usa horas/estados)
+     * - Si $idsOrders es null → modo automático (usa horas/estados/fecha límite)
      * - Si es array → modo manual (solo esos IDs; respeta lógica de tienda/estado posterior)
      */
     public function process(array $idsOrders = null): array
@@ -42,7 +42,7 @@ class ReminderSender
         $sent = 0; $skipped = 0; $reason = '';
 
         if ($idsOrders === null) {
-            // Automático: buscar pedidos por estados + tiempo
+            // Automático: buscar pedidos por estados + tiempo + fecha límite (hasta)
             $idShop = (int)Context::getContext()->shop->id;
             $hours  = (int)Configuration::get(\Pswirepaymentreminder::CFG_HOURS, null, null, $idShop);
             $statesJson = Configuration::get(\Pswirepaymentreminder::CFG_STATES, null, null, $idShop) ?: '[]';
@@ -52,13 +52,24 @@ class ReminderSender
                 return ['sent'=>0,'skipped'=>0,'reason'=>'No states configured'];
             }
 
+            // NUEVO: límite superior por fecha (hasta la fecha incluida)
+            $maxDate = trim((string)Configuration::get(\Pswirepaymentreminder::CFG_MAX_DATE, null, null, $idShop));
+            $dateClause = '';
+            if ($maxDate !== '' && \Validate::isDate($maxDate)) {
+                $dateClause = " AND o.date_add <= '".pSQL(substr($maxDate, 0, 10))." 23:59:59'";
+                // Alternativa equivalente:
+                // $dateClause = " AND o.date_add < DATE_ADD('".pSQL(substr($maxDate, 0, 10))."', INTERVAL 1 DAY)";
+            }
+
             $sql = 'SELECT o.id_order
                     FROM '._DB_PREFIX_.'orders o
                     WHERE o.current_state IN ('.implode(',', $idsStates).')
                       AND o.id_shop='.(int)$idShop.'
-                      AND TIMESTAMPDIFF(HOUR, o.date_add, NOW()) >= '.(int)$hours.'
+                      AND TIMESTAMPDIFF(HOUR, o.date_add, NOW()) >= '.(int)$hours.
+                      $dateClause.'
                     ORDER BY o.date_add ASC
                     LIMIT 500';
+
             $idsOrders = array_map('intval', array_column(Db::getInstance()->executeS($sql) ?: [], 'id_order'));
         }
 

@@ -42,7 +42,7 @@ class Pswirepaymentreminder extends Module
     {
         $this->name = 'pswirepaymentreminder';
         $this->tab = 'emailing';
-        $this->version = '1.3.4';
+        $this->version = '1.3.5';
         $this->author = 'LaqueP';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -291,316 +291,327 @@ class Pswirepaymentreminder extends Module
      * ======================================= */
 
     public function getContent()
-    {
-        // Asegurar tabs instaladas (autorreparación)
-        $this->ensureTabsInstalled();
+{
+    // Asegurar tabs instaladas (autorreparación)
+    $this->ensureTabsInstalled();
 
-        $out = '';
-        if (Tools::isSubmit('submitPswpr')) {
-            // Guardar estados
-            $states = Tools::getValue(self::CFG_STATES, []);
-            $states = json_encode(array_map('intval', (array)$states));
-            $this->updateValueByContext(self::CFG_STATES, $states, false);
+    $out = '';
+    if (Tools::isSubmit('submitPswpr')) {
+        // Guardar estados
+        $states = Tools::getValue(self::CFG_STATES, []);
+        $states = json_encode(array_map('intval', (array)$states));
+        $this->updateValueByContext(self::CFG_STATES, $states, false);
 
-            // Guardar horas
-            $hours  = (int)Tools::getValue(self::CFG_HOURS, 24);
-            $this->updateValueByContext(self::CFG_HOURS, max(1, $hours), false);
+        // Guardar horas
+        $hours  = (int)Tools::getValue(self::CFG_HOURS, 24);
+        $this->updateValueByContext(self::CFG_HOURS, max(1, $hours), false);
 
-            // Estado posterior
-            $afterState = (int)Tools::getValue(self::CFG_AFTER_STATE, 0);
-            $this->updateValueByContext(self::CFG_AFTER_STATE, $afterState, false);
+        // Estado posterior
+        $afterState = (int)Tools::getValue(self::CFG_AFTER_STATE, 0);
+        $this->updateValueByContext(self::CFG_AFTER_STATE, $afterState, false);
 
-            // Guardar urgencia multilenguaje (conservando valores no posteados)
-            $langs = Language::getLanguages(false);
-            $urgValues = [];
-            $defaultUrg = $this->l('Reserva de artículos activa durante {hours} horas');
-            $readShopId = $this->getFormReadShopId(); // de dónde leer el existente si no llega en POST
-            foreach ($langs as $l) {
-                $idLang = (int)$l['id_lang'];
-                $kPost  = self::CFG_URGENCY . '_' . $idLang;
-                $posted = Tools::getValue($kPost, null);
-                if ($posted === null) {
-                    // No llegó en POST: conservar lo guardado (o usar default si vacío)
-                    $existing = (string)Configuration::get(self::CFG_URGENCY, $idLang, null, $readShopId);
-                    $urgValues[$idLang] = ($existing !== '' ? $existing : $defaultUrg);
-                } else {
-                    $urgValues[$idLang] = ($posted !== '' ? (string)$posted : $defaultUrg);
-                }
-            }
-            $this->updateValueByContext(self::CFG_URGENCY, $urgValues, true);
-
-            // Guardar datos bancarios propios (no traducibles)
-            $bwOwner   = (string)Tools::getValue(self::CFG_BW_OWNER,   null);
-            $bwDetails = (string)Tools::getValue(self::CFG_BW_DETAILS, null);
-            $bwAddress = (string)Tools::getValue(self::CFG_BW_ADDRESS, null);
-
-            // Si no llegan en POST, conservar existentes
-            $read = $this->getFormReadShopId();
-            if ($bwOwner === null)   { $bwOwner   = (string)Configuration::get(self::CFG_BW_OWNER,   null, null, $read); }
-            if ($bwDetails === null) { $bwDetails = (string)Configuration::get(self::CFG_BW_DETAILS, null, null, $read); }
-            if ($bwAddress === null) { $bwAddress = (string)Configuration::get(self::CFG_BW_ADDRESS, null, null, $read); }
-
-            $this->updateValueByContext(self::CFG_BW_OWNER,   $bwOwner,   false);
-            $this->updateValueByContext(self::CFG_BW_DETAILS, $bwDetails, false);
-            $this->updateValueByContext(self::CFG_BW_ADDRESS, $bwAddress, false);
-
-            // Guardar fecha límite (hasta esa fecha incluida). Formato YYYY-MM-DD, vacío = sin límite.
-            $maxDatePost = Tools::getValue(self::CFG_MAX_DATE, null); // null si no viene en POST
-            $readShopId  = $this->getFormReadShopId();
-            if ($maxDatePost === null) {
-                $maxDate = (string)Configuration::get(self::CFG_MAX_DATE, null, null, $readShopId);
+        // Guardar urgencia multilenguaje (conservando valores no posteados)
+        $langs = Language::getLanguages(false);
+        $urgValues = [];
+        $defaultUrg = $this->l('Reserva de artículos activa durante {hours} horas');
+        $readShopId = $this->getFormReadShopId(); // de dónde leer el existente si no llega en POST
+        foreach ($langs as $l) {
+            $idLang = (int)$l['id_lang'];
+            $kPost  = self::CFG_URGENCY . '_' . $idLang;
+            $posted = Tools::getValue($kPost, null);
+            if ($posted === null) {
+                // No llegó en POST: conservar lo guardado (o usar default si vacío)
+                $existing = (string)Configuration::get(self::CFG_URGENCY, $idLang, null, $readShopId);
+                $urgValues[$idLang] = ($existing !== '' ? $existing : $defaultUrg);
             } else {
-                $maxDatePost = trim((string)$maxDatePost);
-                if ($maxDatePost === '') {
-                    $maxDate = '';
+                $urgValues[$idLang] = ($posted !== '' ? (string)$posted : $defaultUrg);
+            }
+        }
+        $this->updateValueByContext(self::CFG_URGENCY, $urgValues, true);
+
+        // Guardar datos bancarios propios (no traducibles)
+        $bwOwner   = (string)Tools::getValue(self::CFG_BW_OWNER,   null);
+        $bwDetails = (string)Tools::getValue(self::CFG_BW_DETAILS, null);
+        $bwAddress = (string)Tools::getValue(self::CFG_BW_ADDRESS, null);
+
+        // Si no llegan en POST, conservar existentes
+        $read = $this->getFormReadShopId();
+        if ($bwOwner === null)   { $bwOwner   = (string)Configuration::get(self::CFG_BW_OWNER,   null, null, $read); }
+        if ($bwDetails === null) { $bwDetails = (string)Configuration::get(self::CFG_BW_DETAILS, null, null, $read); }
+        if ($bwAddress === null) { $bwAddress = (string)Configuration::get(self::CFG_BW_ADDRESS, null, null, $read); }
+
+        $this->updateValueByContext(self::CFG_BW_OWNER,   $bwOwner,   false);
+        $this->updateValueByContext(self::CFG_BW_DETAILS, $bwDetails, false);
+        $this->updateValueByContext(self::CFG_BW_ADDRESS, $bwAddress, false);
+
+        // Guardar fecha límite (hasta esa fecha incluida). Formato YYYY-MM-DD, vacío = sin límite.
+        $maxDatePost = Tools::getValue(self::CFG_MAX_DATE, null); // null si no viene en POST
+        $readShopId  = $this->getFormReadShopId();
+        if ($maxDatePost === null) {
+            $maxDate = (string)Configuration::get(self::CFG_MAX_DATE, null, null, $readShopId);
+        } else {
+            $maxDatePost = trim((string)$maxDatePost);
+            if ($maxDatePost === '') {
+                $maxDate = '';
+            } else {
+                if (\Validate::isDate($maxDatePost)) {
+                    $maxDate = substr($maxDatePost, 0, 10); // normaliza a AAAA-MM-DD
                 } else {
-                    if (\Validate::isDate($maxDatePost)) {
-                        $maxDate = substr($maxDatePost, 0, 10); // normaliza a AAAA-MM-DD
-                    } else {
-                        $maxDate = (string)Configuration::get(self::CFG_MAX_DATE, null, null, $readShopId);
-                        $this->warnings[] = $this->l('La fecha límite no tiene un formato válido (AAAA-MM-DD). Se ha ignorado el cambio.');
-                    }
+                    $maxDate = (string)Configuration::get(self::CFG_MAX_DATE, null, null, $readShopId);
+                    $this->warnings[] = $this->l('La fecha límite no tiene un formato válido (AAAA-MM-DD). Se ha ignorado el cambio.');
                 }
             }
-            $this->updateValueByContext(self::CFG_MAX_DATE, $maxDate, false);
+        }
+        $this->updateValueByContext(self::CFG_MAX_DATE, $maxDate, false);
 
-            // Guardar token (solo editable en contexto tienda concreta)
-            if (!Shop::isFeatureActive() || Shop::getContext() === Shop::CONTEXT_SHOP) {
-                $idShopCtx = (int)$this->context->shop->id;
-                $token = (string)Tools::getValue(self::CFG_TOKEN, '');
-                if (!empty($token)) {
-                    Configuration::updateValue(self::CFG_TOKEN, preg_replace('/[^a-f0-9]/i', '', $token), false, null, $idShopCtx);
-                } elseif (!Configuration::get(self::CFG_TOKEN, null, null, $idShopCtx)) {
-                    Configuration::updateValue(self::CFG_TOKEN, bin2hex(random_bytes(16)), false, null, $idShopCtx);
-                }
+        // Guardar token (solo editable en contexto tienda concreta)
+        if (!Shop::isFeatureActive() || Shop::getContext() === Shop::CONTEXT_SHOP) {
+            $idShopCtx = (int)$this->context->shop->id;
+            $token = (string)Tools::getValue(self::CFG_TOKEN, '');
+            if (!empty($token)) {
+                Configuration::updateValue(self::CFG_TOKEN, preg_replace('/[^a-f0-9]/i', '', $token), false, null, $idShopCtx);
+            } elseif (!Configuration::get(self::CFG_TOKEN, null, null, $idShopCtx)) {
+                Configuration::updateValue(self::CFG_TOKEN, bin2hex(random_bytes(16)), false, null, $idShopCtx);
             }
-
-            $out .= $this->displayConfirmation($this->l('Configuración actualizada.'));
         }
 
-        return $out . $this->renderForm();
+        $out .= $this->displayConfirmation($this->l('Configuración actualizada.'));
+
+        // Mostrar advertencias acumuladas (por ejemplo, fecha inválida)
+        if (!empty($this->warnings)) {
+            foreach ($this->warnings as $w) {
+                $out .= $this->displayWarning($w);
+            }
+        }
     }
+
+    return $out . $this->renderForm();
+}
+
 
     protected function renderForm()
-    {
-        $idShopRead = $this->getFormReadShopId(); // 0 si All shops, id tienda si contexto tienda
+{
+    $idShopRead = $this->getFormReadShopId(); // 0 si All shops, id tienda si contexto tienda
 
-        // Estados de pedido
-        $orderStates = OrderState::getOrderStates($this->context->language->id);
-        $options = [];
-        foreach ($orderStates as $s) {
-            $options[] = [
-                'id_option' => (int)$s['id_order_state'],
-                'name'      => $s['name']
-            ];
-        }
+    // Estados de pedido
+    $orderStates = OrderState::getOrderStates($this->context->language->id);
+    $options = [];
+    foreach ($orderStates as $s) {
+        $options[] = [
+            'id_option' => (int)$s['id_order_state'],
+            'name'      => $s['name']
+        ];
+    }
 
-        // CSS inline para ajustar tamaños/anchos en el BO
-        $inlineCss = '<style>
-            #content select[name="'.self::CFG_STATES.'[]"]{ min-height:260px; }
-            #content input[name^="'.self::CFG_URGENCY.'["],
-            #content input[name^="'.self::CFG_URGENCY.'_"]{ max-width:none; width:100%; }
-            #content input[name="'.self::CFG_BW_OWNER.'"],
-            #content textarea[name="'.self::CFG_BW_DETAILS.'"],
-            #content textarea[name="'.self::CFG_BW_ADDRESS.'"]{ max-width:none; width:100%; }
-        </style>';
+    // CSS inline para ajustar tamaños/anchos en el BO
+    $inlineCss = '<style>
+        #content select[name="'.self::CFG_STATES.'[]"]{ min-height:260px; }
+        #content input[name^="'.self::CFG_URGENCY.'["],
+        #content input[name^="'.self::CFG_URGENCY.'_"]{ max-width:none; width:100%; }
+        #content input[name="'.self::CFG_BW_OWNER.'"],
+        #content textarea[name="'.self::CFG_BW_DETAILS.'"],
+        #content textarea[name="'.self::CFG_BW_ADDRESS.'"]{ max-width:none; width:100%; }
+    </style>';
 
-        // Form principal
-        $fields_form = [
-            'form' => [
-                'legend' => ['title' => $this->l('Ajustes de recordatorio')],
-                'input'  => [
-                    // CSS inline
-                    ['type' => 'free', 'name' => 'PSWPR_INLINE_CSS'],
-                    [
-                        'type'     => 'select',
-                        'label'    => $this->l('Estados a vigilar'),
-                        'name'     => self::CFG_STATES . '[]',
-                        'multiple' => true,
-                        'size'     => 12,
-                        'options'  => [
-                            'query' => $options,
-                            'id'    => 'id_option',
-                            'name'  => 'name'
-                        ],
-                        'desc'     => $this->l('Se enviará el recordatorio si el pedido permanece en cualquiera de estos estados.'),
+    // Form principal
+    $fields_form = [
+        'form' => [
+            'legend' => ['title' => $this->l('Ajustes de recordatorio')],
+            'input'  => [
+                // CSS inline
+                ['type' => 'free', 'name' => 'PSWPR_INLINE_CSS'],
+                [
+                    'type'     => 'select',
+                    'label'    => $this->l('Estados a vigilar'),
+                    'name'     => self::CFG_STATES . '[]',
+                    'multiple' => true,
+                    'size'     => 12,
+                    'options'  => [
+                        'query' => $options,
+                        'id'    => 'id_option',
+                        'name'  => 'name'
                     ],
-                    [
-                        'type'  => 'text',
-                        'label' => $this->l('Horas de espera'),
-                        'name'  => self::CFG_HOURS,
-                        'class' => 'fixed-width-sm',
-                        'desc'  => $this->l('Número de horas desde la creación del pedido para enviar el recordatorio.'),
-                    ],
-                    [
-                        'type'  => 'date', // si tu BO legacy no pinta date, cambiar a 'text' + 'class' => 'datepicker'
-                        'label' => $this->l('Fecha límite (cron)'),
-                        'name'  => self::CFG_MAX_DATE,
-                        'class' => 'fixed-width-lg',
-                        'desc'  => $this->l('La cron solo revisará pedidos creados hasta esta fecha (incluida). AAAA-MM-DD. Déjalo vacío para no limitar.'),
-                    ],
-                    [
-                        'type'  => 'select',
-                        'label' => $this->l('Estado tras enviar el recordatorio'),
-                        'name'  => self::CFG_AFTER_STATE,
-                        'options' => [
-                            'query' => array_merge([['id_option'=>0,'name'=>$this->l('No cambiar')]], $options),
-                            'id'    => 'id_option',
-                            'name'  => 'name'
-                        ],
-                        'desc'  => $this->l('Opcional. Si se define, el pedido cambiará a este estado tras enviar el recordatorio.'),
-                    ],
-                    // Campo multilenguaje (fluido)
-                    [
-                        'type'   => 'text',
-                        'label'  => $this->l('Mensaje de urgencia (traducible)'),
-                        'name'   => self::CFG_URGENCY,
-                        'lang'   => true,
-                        'desc'   => $this->l('Usa {hours} como marcador que será reemplazado por el valor configurado.'),
-                    ],
-                    // === Campos de datos bancarios propios del módulo (por tienda, no traducibles) ===
-                    [
-                        'type'  => 'text',
-                        'label' => $this->l('Titular de la cuenta'),
-                        'name'  => self::CFG_BW_OWNER,
-                        'desc'  => $this->l('Se usará en el email y la vista previa. Si lo dejas vacío, se intentará leer del módulo ps_wirepayment.'),
-                    ],
-                    [
-                        'type'  => 'textarea',
-                        'label' => $this->l('Datos de la cuenta / IBAN'),
-                        'name'  => self::CFG_BW_DETAILS,
-                        'rows'  => 3,
-                        'desc'  => $this->l('Puedes usar varias líneas (IBAN, BIC, banco). Si está vacío, fallback a ps_wirepayment.'),
-                    ],
-                    [
-                        'type'  => 'textarea',
-                        'label' => $this->l('Dirección bancaria'),
-                        'name'  => self::CFG_BW_ADDRESS,
-                        'rows'  => 3,
-                        'desc'  => $this->l('Dirección física del banco. Si está vacío, fallback a ps_wirepayment.'),
-                    ],
+                    'desc'     => $this->l('Se enviará el recordatorio si el pedido permanece en cualquiera de estos estados.'),
                 ],
-                'submit' => ['title' => $this->l('Guardar')],
+                [
+                    'type'  => 'text',
+                    'label' => $this->l('Horas de espera'),
+                    'name'  => self::CFG_HOURS,
+                    'class' => 'fixed-width-sm',
+                    'desc'  => $this->l('Número de horas desde la creación del pedido para enviar el recordatorio.'),
+                ],
+                [
+                    'type'  => 'date', // si tu BO no pinta datepicker, usar 'text' + 'class' => 'datepicker'
+                    'label' => $this->l('Fecha límite (cron)'),
+                    'name'  => self::CFG_MAX_DATE,
+                    'class' => 'fixed-width-lg',
+                    'desc'  => $this->l('La cron solo revisará pedidos creados hasta esta fecha (incluida). AAAA-MM-DD. Déjalo vacío para no limitar.'),
+                ],
+                [
+                    'type'  => 'select',
+                    'label' => $this->l('Estado tras enviar el recordatorio'),
+                    'name'  => self::CFG_AFTER_STATE,
+                    'options' => [
+                        'query' => array_merge([['id_option'=>0,'name'=>$this->l('No cambiar')]], $options),
+                        'id'    => 'id_option',
+                        'name'  => 'name'
+                    ],
+                    'desc'  => $this->l('Opcional. Si se define, el pedido cambiará a este estado tras enviar el recordatorio.'),
+                ],
+                // Campo multilenguaje (fluido)
+                [
+                    'type'   => 'text',
+                    'label'  => $this->l('Mensaje de urgencia (traducible)'),
+                    'name'   => self::CFG_URGENCY,
+                    'lang'   => true,
+                    'desc'   => $this->l('Usa {hours} como marcador que será reemplazado por el valor configurado.'),
+                ],
+                // === Campos de datos bancarios propios del módulo (por tienda, no traducibles) ===
+                [
+                    'type'  => 'text',
+                    'label' => $this->l('Titular de la cuenta'),
+                    'name'  => self::CFG_BW_OWNER,
+                    'desc'  => $this->l('Se usará en el email y la vista previa. Si lo dejas vacío, se intentará leer del módulo ps_wirepayment.'),
+                ],
+                [
+                    'type'  => 'textarea',
+                    'label' => $this->l('Datos de la cuenta / IBAN'),
+                    'name'  => self::CFG_BW_DETAILS,
+                    'rows'  => 3,
+                    'desc'  => $this->l('Puedes usar varias líneas (IBAN, BIC, banco). Si está vacío, fallback a ps_wirepayment.'),
+                ],
+                [
+                    'type'  => 'textarea',
+                    'label' => $this->l('Dirección bancaria'),
+                    'name'  => self::CFG_BW_ADDRESS,
+                    'rows'  => 3,
+                    'desc'  => $this->l('Dirección física del banco. Si está vacío, fallback a ps_wirepayment.'),
+                ],
             ],
-        ];
+            'submit' => ['title' => $this->l('Guardar')],
+        ],
+    ];
 
-        // === BLOQUE TOKEN + CRON URL ===
-        $cronPanelHtml = $this->buildCronPanelHtml((int)$this->context->shop->id);
+    // === BLOQUE TOKEN + CRON URL ===
+    $cronPanelHtml = $this->buildCronPanelHtml((int)$this->context->shop->id);
 
-        $fields_form['form']['input'][] = [
-            'type'  => 'free',
-            'label' => $this->l('Tareas programadas (Cron)'),
-            'name'  => 'PSWPR_CRON_BLOCK',
-            'desc'  => $this->l('Usa estas URLs en tu cron. Cada tienda tiene su propio token.'),
-        ];
-        $cronInfoHtml = $this->buildCronInfoHtml();
+    $fields_form['form']['input'][] = [
+        'type'  => 'free',
+        'label' => $this->l('Tareas programadas (Cron)'),
+        'name'  => 'PSWPR_CRON_BLOCK',
+        'desc'  => $this->l('Usa estas URLs en tu cron. Cada tienda tiene su propio token.'),
+    ];
 
-$fields_form['form']['input'][] = [
-    'type'  => 'free',
-    'label' => $this->l('Información sobre la CRON'),
-    'name'  => 'PSWPR_CRON_INFO',
-];
+    // Cuadro informativo de la CRON
+    $cronInfoHtml = $this->buildCronInfoHtml();
+    $fields_form['form']['input'][] = [
+        'type'  => 'free',
+        'label' => $this->l('Información sobre la CRON'),
+        'name'  => 'PSWPR_CRON_INFO',
+    ];
 
-        // === BLOQUE PREVIEW (iframe) ===
-        $previewHtml = $this->buildPreviewPanelHtml((int)$this->context->shop->id);
+    // === BLOQUE PREVIEW (iframe) ===
+    $previewHtml = $this->buildPreviewPanelHtml((int)$this->context->shop->id);
 
-        $fields_form['form']['input'][] = [
-            'type'  => 'free',
-            'label' => $this->l('Vista previa'),
-            'name'  => 'PSWPR_PREVIEW',
-            'desc'  => $this->l('Previsualización con datos de ejemplo y tu mensaje de urgencia.'),
-        ];
+    $fields_form['form']['input'][] = [
+        'type'  => 'free',
+        'label' => $this->l('Vista previa'),
+        'name'  => 'PSWPR_PREVIEW',
+        'desc'  => $this->l('Previsualización con datos de ejemplo y tu mensaje de urgencia.'),
+    ];
 
-        // === Link directo a la pestaña de envío manual (por si el menú tarda en refrescarse) ===
-        $manualLink = $this->context->link->getAdminLink('AdminPswirepaymentreminderManual', true, [], ['reset_filter' => 1]);
-        $manualBlock = '<a class="btn btn-default" href="'.htmlspecialchars($manualLink).'" target="_blank">
+    // === Link directo a la pestaña de envío manual ===
+    $manualLink = $this->context->link->getAdminLink('AdminPswirepaymentreminderManual', true, [], ['reset_filter' => 1]);
+    $manualBlock = '<a class="btn btn-default" href="'.htmlspecialchars($manualLink).'" target="_blank">
   <i class="icon-envelope"></i> '.$this->l('Abrir envío manual').'</a>';
 
-        $fields_form['form']['input'][] = [
-            'type'  => 'free',
-            'label' => $this->l('Envío manual'),
-            'name'  => 'PSWPR_MANUAL_LINK',
-            'desc'  => $manualBlock,
+    $fields_form['form']['input'][] = [
+        'type'  => 'free',
+        'label' => $this->l('Envío manual'),
+        'name'  => 'PSWPR_MANUAL_LINK',
+        'desc'  => $manualBlock,
+    ];
+
+    // Helper
+    $helper = new HelperForm();
+    $helper->module = $this;
+    $helper->name_controller = $this->name;
+    $helper->token = Tools::getAdminTokenLite('AdminModules');
+    $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
+    $helper->default_form_language = (int)$this->context->language->id; // idioma del empleado
+    $helper->id_language = (int)$this->context->language->id;
+    $helper->allow_employee_form_lang = (int)Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG');
+    $helper->title = $this->displayName;
+    $helper->show_toolbar = false;
+    $helper->submit_action = 'submitPswpr';
+
+    // Asegura el switcher de idiomas visible
+    $helper->languages = [];
+    foreach (Language::getLanguages(false) as $lang) {
+        $helper->languages[] = [
+            'id_lang'    => (int)$lang['id_lang'],
+            'iso_code'   => $lang['iso_code'],
+            'name'       => $lang['name'],
+            'is_default' => (int)$lang['id_lang'] === (int)$helper->default_form_language ? 1 : 0,
         ];
-
-        // Helper
-        $helper = new HelperForm();
-        $helper->module = $this;
-        $helper->name_controller = $this->name;
-        $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
-        $helper->default_form_language = (int)$this->context->language->id; // idioma del empleado
-        $helper->id_language = (int)$this->context->language->id;
-        $helper->allow_employee_form_lang = (int)Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG');
-        $helper->title = $this->displayName;
-        $helper->show_toolbar = false;
-        $helper->submit_action = 'submitPswpr';
-
-        // Asegura el switcher de idiomas visible
-        $helper->languages = [];
-        foreach (Language::getLanguages(false) as $lang) {
-            $helper->languages[] = [
-                'id_lang'    => (int)$lang['id_lang'],
-                'iso_code'   => $lang['iso_code'],
-                'name'       => $lang['name'],
-                'is_default' => (int)$lang['id_lang'] === (int)$helper->default_form_language ? 1 : 0,
-            ];
-        }
-
-        // Valores para pintar
-        $helper->fields_value['PSWPR_INLINE_CSS'] = $inlineCss;
-
-        $statesJson = (string)Configuration::get(self::CFG_STATES, null, null, $idShopRead);
-        $helper->fields_value[self::CFG_STATES.'[]'] = json_decode($statesJson ?: '[]', true);
-
-        $helper->fields_value[self::CFG_HOURS]       = (int)Configuration::get(self::CFG_HOURS, null, null, $idShopRead);
-        $helper->fields_value[self::CFG_AFTER_STATE] = (int)Configuration::get(self::CFG_AFTER_STATE, null, null, $idShopRead);
-
-        // Fecha límite
-        $helper->fields_value[self::CFG_MAX_DATE] =
-            (string)Configuration::get(self::CFG_MAX_DATE, null, null, $idShopRead);
-
-        // Urgencia multilenguaje (forma correcta para HelperForm: array por id_lang)
-        $defaultUrg = $this->l('Reserva de artículos activa durante {hours} horas');
-        $helper->fields_value[self::CFG_URGENCY] = [];
-        foreach (Language::getLanguages(false) as $l) {
-            $idLang = (int)$l['id_lang'];
-            // Preferir POST si existe (para que, tras guardar, veas lo que enviaste)
-            $postKey = self::CFG_URGENCY.'_'.$idLang;
-            $posted  = Tools::getValue($postKey, null);
-            if ($posted !== null) {
-                $val = (string)$posted;
-            } else {
-                $val = (string)Configuration::get(self::CFG_URGENCY, $idLang, null, $idShopRead);
-            }
-            if ($val === '') { $val = $defaultUrg; }
-            $helper->fields_value[self::CFG_URGENCY][$idLang] = $val;
-        }
-
-        // Datos bancarios propios
-        $helper->fields_value[self::CFG_BW_OWNER]   = (string)Configuration::get(self::CFG_BW_OWNER,   null, null, $idShopRead);
-        $helper->fields_value[self::CFG_BW_DETAILS] = (string)Configuration::get(self::CFG_BW_DETAILS, null, null, $idShopRead);
-        $helper->fields_value[self::CFG_BW_ADDRESS] = (string)Configuration::get(self::CFG_BW_ADDRESS, null, null, $idShopRead);
-
-        // Campo token solo si contexto tienda concreta (editable). En "todas", se muestra tabla en panel.
-        if (!Shop::isFeatureActive() || Shop::getContext() === Shop::CONTEXT_SHOP) {
-            $fields_form['form']['input'][] = [
-                'type'  => 'text',
-                'label' => $this->l('Token de cron (esta tienda)'),
-                'name'  => self::CFG_TOKEN,
-                'class' => 'fixed-width-xxl',
-                'desc'  => $this->l('Puedes regenerarlo manualmente (hex). Cambiarlo obliga a actualizar tu cron externo.'),
-            ];
-            $helper->fields_value[self::CFG_TOKEN] = (string)Configuration::get(self::CFG_TOKEN, null, null, (int)$this->context->shop->id);
-        }
-
-        // Free blocks (cron panel + preview + manual link)
-        $helper->fields_value['PSWPR_CRON_BLOCK']  = $cronPanelHtml;
-        $helper->fields_value['PSWPR_PREVIEW']     = $previewHtml;
-        $helper->fields_value['PSWPR_MANUAL_LINK'] = ''; // contenido ya va en desc
-
-        return $helper->generateForm([$fields_form]);
     }
+
+    // Valores para pintar
+    $helper->fields_value['PSWPR_INLINE_CSS'] = $inlineCss;
+
+    $statesJson = (string)Configuration::get(self::CFG_STATES, null, null, $idShopRead);
+    $helper->fields_value[self::CFG_STATES.'[]'] = json_decode($statesJson ?: '[]', true);
+
+    $helper->fields_value[self::CFG_HOURS]       = (int)Configuration::get(self::CFG_HOURS, null, null, $idShopRead);
+    $helper->fields_value[self::CFG_AFTER_STATE] = (int)Configuration::get(self::CFG_AFTER_STATE, null, null, $idShopRead);
+
+    // Fecha límite
+    $helper->fields_value[self::CFG_MAX_DATE] =
+        (string)Configuration::get(self::CFG_MAX_DATE, null, null, $idShopRead);
+
+    // Urgencia multilenguaje
+    $defaultUrg = $this->l('Reserva de artículos activa durante {hours} horas');
+    $helper->fields_value[self::CFG_URGENCY] = [];
+    foreach (Language::getLanguages(false) as $l) {
+        $idLang = (int)$l['id_lang'];
+        // Preferir POST si existe
+        $postKey = self::CFG_URGENCY.'_'.$idLang;
+        $posted  = Tools::getValue($postKey, null);
+        if ($posted !== null) {
+            $val = (string)$posted;
+        } else {
+            $val = (string)Configuration::get(self::CFG_URGENCY, $idLang, null, $idShopRead);
+        }
+        if ($val === '') { $val = $defaultUrg; }
+        $helper->fields_value[self::CFG_URGENCY][$idLang] = $val;
+    }
+
+    // Datos bancarios propios
+    $helper->fields_value[self::CFG_BW_OWNER]   = (string)Configuration::get(self::CFG_BW_OWNER,   null, null, $idShopRead);
+    $helper->fields_value[self::CFG_BW_DETAILS] = (string)Configuration::get(self::CFG_BW_DETAILS, null, null, $idShopRead);
+    $helper->fields_value[self::CFG_BW_ADDRESS] = (string)Configuration::get(self::CFG_BW_ADDRESS, null, null, $idShopRead);
+
+    // Campo token solo si contexto tienda concreta (editable). En "todas", se muestra tabla en panel.
+    if (!Shop::isFeatureActive() || Shop::getContext() === Shop::CONTEXT_SHOP) {
+        $fields_form['form']['input'][] = [
+            'type'  => 'text',
+            'label' => $this->l('Token de cron (esta tienda)'),
+            'name'  => self::CFG_TOKEN,
+            'class' => 'fixed-width-xxl',
+            'desc'  => $this->l('Puedes regenerarlo manualmente (hex). Cambiarlo obliga a actualizar tu cron externo.'),
+        ];
+        $helper->fields_value[self::CFG_TOKEN] = (string)Configuration::get(self::CFG_TOKEN, null, null, (int)$this->context->shop->id);
+    }
+
+    // Free blocks (cron panel + preview + manual link + cron info)
+    $helper->fields_value['PSWPR_CRON_BLOCK']  = $cronPanelHtml;
+    $helper->fields_value['PSWPR_PREVIEW']     = $previewHtml;
+    $helper->fields_value['PSWPR_CRON_INFO']   = $cronInfoHtml;  // <-- ahora se inyecta el HTML del cuadro informativo
+    $helper->fields_value['PSWPR_MANUAL_LINK'] = ''; // contenido ya va en desc
+
+    return $helper->generateForm([$fields_form]);
+}
+
 
     /**
      * Panel Cron:

@@ -42,7 +42,7 @@ class Pswirepaymentreminder extends Module
     {
         $this->name = 'pswirepaymentreminder';
         $this->tab = 'emailing';
-        $this->version = '1.3.5';
+        $this->version = '1.3.6';
         $this->author = 'LaqueP';
         $this->need_instance = 0;
         $this->bootstrap = true;

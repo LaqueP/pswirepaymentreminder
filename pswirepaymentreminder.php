@@ -776,7 +776,7 @@ class Pswirepaymentreminder extends Module
       <h4><i class="icon-time"></i> '.$this->l('Cómo filtra ahora la CRON los pedidos').'</h4>
       <ul>
         <li>'.$this->l('Solo revisa pedidos creados en las últimas 48 horas.').'</li>
-        <li>'.$this->l('Si el cliente tiene cualquier otro pedido en las últimas 48 horas (misma tienda), no se enviará el recordatorio.').'</li>
+        <li>'.$this->l('Si el cliente tiene cualquier otro pedido en las últimas 48 horas (misma tienda) y ha pasado por el estado id = 2 (Pago aceptado), no se enviará el recordatorio.').'</li>
         <li>'.$this->l('Se mantienen tus reglas: estados vigilados y horas de espera configuradas.').'</li>
         <li>'.$this->l('Este filtrado aplica únicamente a la ejecución automática por CRON.').'</li>
         <li>'.$this->l('El envío manual no aplica la ventana de 48 h. Puedes usarlo desde:').'

@@ -40,118 +40,129 @@ class ReminderSender
      * - Si $idsOrders es null → modo automático (usa horas/estados/fecha límite + ventana 48h + check “sin otros pedidos recientes”)
      * - Si es array → modo manual (solo esos IDs; respeta lógica de tienda/estado posterior, SIN restricciones de 48h)
      */
-    public function process(array $idsOrders = null): array
-    {
-        $sent = 0; $skipped = 0; $reason = '';
+ public function process(array $idsOrders = null): array
+{
+    $sent = 0; $skipped = 0; $reason = '';
 
-        $automatic = ($idsOrders === null);
+    $automatic = ($idsOrders === null);
 
-        if ($automatic) {
-            // Automático: buscar pedidos por estados + tiempo + fecha límite (hasta) + “creados en últimas 48h”
-            $idShop = (int)Context::getContext()->shop->id;
-            $hours  = (int)Configuration::get(\Pswirepaymentreminder::CFG_HOURS, null, null, $idShop);
-            $statesJson = Configuration::get(\Pswirepaymentreminder::CFG_STATES, null, null, $idShop) ?: '[]';
-            $idsStates = array_map('intval', json_decode($statesJson, true));
+    if ($automatic) {
+        // Automático: buscar pedidos por estados + tiempo + fecha límite (hasta) + “creados en últimas 48h”
+        $idShop = (int)Context::getContext()->shop->id;
+        $hours  = (int)Configuration::get(\Pswirepaymentreminder::CFG_HOURS, null, null, $idShop);
+        $statesJson = Configuration::get(\Pswirepaymentreminder::CFG_STATES, null, null, $idShop) ?: '[]';
+        $idsStates = array_map('intval', json_decode($statesJson, true));
 
-            if (empty($idsStates)) {
-                return ['sent'=>0,'skipped'=>0,'reason'=>'No states configured'];
-            }
-
-            // Límite superior por fecha (hasta la fecha incluida)
-            $maxDate = trim((string)Configuration::get(\Pswirepaymentreminder::CFG_MAX_DATE, null, null, $idShop));
-            $dateMaxClause = '';
-            if ($maxDate !== '' && \Validate::isDate($maxDate)) {
-                $dateMaxClause = " AND o.date_add <= '".pSQL(substr($maxDate, 0, 10))." 23:59:59'";
-            }
-
-            // NUEVO: limitar a pedidos creados en las últimas N horas (48h)
-            $dateMinClause = " AND o.date_add >= DATE_SUB(NOW(), INTERVAL ".(int)$this->cronRecentHours." HOUR)";
-
-            $sql = 'SELECT o.id_order
-                    FROM '._DB_PREFIX_.'orders o
-                    WHERE o.current_state IN ('.implode(',', $idsStates).')
-                      AND o.id_shop='.(int)$idShop.'
-                      AND TIMESTAMPDIFF(HOUR, o.date_add, NOW()) >= '.(int)$hours
-                      .$dateMinClause
-                      .$dateMaxClause.'
-                    ORDER BY o.date_add ASC
-                    LIMIT 500';
-
-            $idsOrders = array_map('intval', array_column(Db::getInstance()->executeS($sql) ?: [], 'id_order'));
+        if (empty($idsStates)) {
+            return ['sent'=>0,'skipped'=>0,'reason'=>'No states configured'];
         }
 
-        foreach ($idsOrders as $idOrder) {
-            $order = new Order((int)$idOrder);
-            if (!Validate::isLoadedObject($order)) { $skipped++; continue; }
-
-            $ctx = Context::getContext();
-            $ctx->language = new Language((int)$order->id_lang);
-            $ctx->shop     = new Shop((int)$order->id_shop);
-            $ctx->currency = new Currency((int)$order->id_currency);
-            $ctx->link     = new Link();
-
-            // Horas/estado posterior por tienda
-            $hours      = (int)Configuration::get(\Pswirepaymentreminder::CFG_HOURS, null, null, (int)$order->id_shop);
-            $afterState = $this->afterState;
-            if (!$afterState) {
-                $afterState = (int)Configuration::get(\Pswirepaymentreminder::CFG_AFTER_STATE, null, null, (int)$order->id_shop);
-            }
-
-            // SOLO en CRON: descartar si el cliente tiene OTROS pedidos en las últimas 48h
-            if ($automatic) {
-                $hasOtherRecent = (bool)Db::getInstance()->getValue(
-                    'SELECT COUNT(1)
-                     FROM '._DB_PREFIX_.'orders o2
-                     WHERE o2.id_customer = '.(int)$order->id_customer.'
-                       AND o2.id_shop = '.(int)$order->id_shop.'
-                       AND o2.id_order <> '.(int)$order->id.'
-                       AND o2.date_add >= DATE_SUB(NOW(), INTERVAL '.(int)$this->cronRecentHours.' HOUR)'
-                );
-                if ($hasOtherRecent) {
-                    $skipped++;
-                    continue;
-                }
-            }
-
-            // Variables de plantilla (todas, incluyendo bankwire + urgency)
-            $tplVars = $this->buildTemplateVars($order, $hours);
-
-            // Envío
-            $template = 'bankwire_reminder';
-            $subject  = $this->module->l('Recordatorio de transferencia bancaria', 'ReminderSender');
-            $to       = (new Customer((int)$order->id_customer))->email;
-
-            $ok = Mail::Send(
-                (int)$order->id_lang,
-                $template,
-                $subject,
-                $tplVars,
-                $to,
-                null, // to name
-                null, // from
-                null, // from name
-                null, // file attachment
-                null, // mode smtp
-                _PS_MODULE_DIR_.$this->module->name.'/mails/', // mail dir
-                false, // die
-                (int)$order->id_shop, // id_shop
-                null, // bcc
-                (int)$order->id_order // id_order → útil para hooks/log
-            );
-
-            if ($ok) {
-                $sent++;
-                // Cambio de estado si procede
-                if ($afterState > 0) {
-                    $this->updateOrderState($order, $afterState);
-                }
-            } else {
-                $skipped++;
-            }
+        // Límite superior por fecha (hasta la fecha incluida)
+        $maxDate = trim((string)Configuration::get(\Pswirepaymentreminder::CFG_MAX_DATE, null, null, $idShop));
+        $dateMaxClause = '';
+        if ($maxDate !== '' && \Validate::isDate($maxDate)) {
+            $dateMaxClause = " AND o.date_add <= '".pSQL(substr($maxDate, 0, 10))." 23:59:59'";
         }
 
-        return ['sent'=>$sent,'skipped'=>$skipped,'reason'=>$reason];
+        // Limitar a pedidos creados en las últimas N horas (48h)
+        $dateMinClause = " AND o.date_add >= DATE_SUB(NOW(), INTERVAL ".(int)$this->cronRecentHours." HOUR)";
+
+        $sql = 'SELECT o.id_order
+                FROM '._DB_PREFIX_.'orders o
+                WHERE o.current_state IN ('.implode(',', $idsStates).')
+                  AND o.id_shop='.(int)$idShop.'
+                  AND TIMESTAMPDIFF(HOUR, o.date_add, NOW()) >= '.(int)$hours
+                  .$dateMinClause
+                  .$dateMaxClause.'
+                ORDER BY o.date_add ASC
+                LIMIT 500';
+
+        $idsOrders = array_map('intval', array_column(Db::getInstance()->executeS($sql) ?: [], 'id_order'));
     }
+
+    foreach ($idsOrders as $idOrder) {
+        $order = new Order((int)$idOrder);
+        if (!Validate::isLoadedObject($order)) { $skipped++; continue; }
+
+        $ctx = Context::getContext();
+        $ctx->language = new Language((int)$order->id_lang);
+        $ctx->shop     = new Shop((int)$order->id_shop);
+        $ctx->currency = new Currency((int)$order->id_currency);
+        $ctx->link     = new Link();
+
+        // Horas/estado posterior por tienda
+        $hours      = (int)Configuration::get(\Pswirepaymentreminder::CFG_HOURS, null, null, (int)$order->id_shop);
+        $afterState = $this->afterState;
+        if (!$afterState) {
+            $afterState = (int)Configuration::get(\Pswirepaymentreminder::CFG_AFTER_STATE, null, null, (int)$order->id_shop);
+        }
+
+        // SOLO en CRON: descartar si el cliente tiene OTROS pedidos en las últimas 48h
+        // que hayan estado o pasado por el estado 2 (comprobando order_history).
+        if ($automatic) {
+            $requiredStateId = 2; // id del estado requerido
+
+            $hasOtherRecent = (bool)Db::getInstance()->getValue('
+                SELECT COUNT(1)
+                FROM '._DB_PREFIX_.'orders o2
+                WHERE o2.id_customer = '.(int)$order->id_customer.'
+                  AND o2.id_shop = '.(int)$order->id_shop.'
+                  AND o2.id_order <> '.(int)$order->id.'
+                  AND o2.date_add >= DATE_SUB(NOW(), INTERVAL '.(int)$this->cronRecentHours.' HOUR)
+                  AND EXISTS (
+                        SELECT 1
+                        FROM '._DB_PREFIX_.'order_history oh
+                        WHERE oh.id_order = o2.id_order
+                          AND oh.id_order_state = '.(int)$requiredStateId.'
+                  )
+            ');
+
+            if ($hasOtherRecent) {
+                $skipped++;
+                continue;
+            }
+        }
+
+        // Variables de plantilla (todas, incluyendo bankwire + urgency)
+        $tplVars = $this->buildTemplateVars($order, $hours);
+
+        // Envío
+        $template = 'bankwire_reminder';
+        $subject  = $this->module->l('Recordatorio de transferencia bancaria', 'ReminderSender');
+        $to       = (new Customer((int)$order->id_customer))->email;
+
+        $ok = Mail::Send(
+            (int)$order->id_lang,
+            $template,
+            $subject,
+            $tplVars,
+            $to,
+            null, // to name
+            null, // from
+            null, // from name
+            null, // file attachment
+            null, // mode smtp
+            _PS_MODULE_DIR_.$this->module->name.'/mails/', // mail dir
+            false, // die
+            (int)$order->id_shop, // id_shop
+            null, // bcc
+            (int)$order->id_order // id_order → útil para hooks/log
+        );
+
+        if ($ok) {
+            $sent++;
+            // Cambio de estado si procede
+            if ($afterState > 0) {
+                $this->updateOrderState($order, $afterState);
+            }
+        } else {
+            $skipped++;
+        }
+    }
+
+    return ['sent'=>$sent,'skipped'=>$skipped,'reason'=>$reason];
+}
+
 
     /** Construye todas las variables de la plantilla, incluyendo bankwire + urgency */
     protected function buildTemplateVars(Order $order, int $hours): array

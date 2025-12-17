@@ -42,8 +42,8 @@ class Pswirepaymentreminder extends Module
     {
         $this->name = 'pswirepaymentreminder';
         $this->tab = 'emailing';
-        $this->version = '1.3.3';
-        $this->author = 'Desarrollador de módulos de Prestashop';
+        $this->version = '1.3.4';
+        $this->author = 'LaqueP';
         $this->need_instance = 0;
         $this->bootstrap = true;
         $this->ps_versions_compliancy = ['min' => '8.0.0', 'max' => _PS_VERSION_];
@@ -493,6 +493,13 @@ class Pswirepaymentreminder extends Module
             'name'  => 'PSWPR_CRON_BLOCK',
             'desc'  => $this->l('Usa estas URLs en tu cron. Cada tienda tiene su propio token.'),
         ];
+        $cronInfoHtml = $this->buildCronInfoHtml();
+
+$fields_form['form']['input'][] = [
+    'type'  => 'free',
+    'label' => $this->l('Información sobre la CRON'),
+    'name'  => 'PSWPR_CRON_INFO',
+];
 
         // === BLOQUE PREVIEW (iframe) ===
         $previewHtml = $this->buildPreviewPanelHtml((int)$this->context->shop->id);
@@ -740,6 +747,36 @@ class Pswirepaymentreminder extends Module
 
         return $html;
     }
+    protected function buildCronInfoHtml(): string
+{
+    // Enlace a la pantalla de envío manual (para aclarar que allí NO aplica la restricción de 48h)
+    $manualLink = $this->context->link->getAdminLink('AdminPswirepaymentreminderManual', true, [], ['reset_filter' => 1]);
+
+    // Pequeño CSS para el callout
+    $css = '<style>
+      .pswpr-callout{border-left:4px solid #25B9D7;background:#f8fbfd;padding:12px 15px;margin:10px 0;border-radius:3px;}
+      .pswpr-callout h4{margin:0 0 6px 0;font-weight:600;color:#0f5b6a;}
+      .pswpr-callout ul{margin:6px 0 0 18px;}
+      .pswpr-callout li{margin:4px 0;}
+    </style>';
+
+    $html = $css.'
+    <div class="pswpr-callout">
+      <h4><i class="icon-time"></i> '.$this->l('Cómo filtra ahora la CRON los pedidos').'</h4>
+      <ul>
+        <li>'.$this->l('Solo revisa pedidos creados en las últimas 48 horas.').'</li>
+        <li>'.$this->l('Si el cliente tiene cualquier otro pedido en las últimas 48 horas (misma tienda), no se enviará el recordatorio.').'</li>
+        <li>'.$this->l('Se mantienen tus reglas: estados vigilados y horas de espera configuradas.').'</li>
+        <li>'.$this->l('Este filtrado aplica únicamente a la ejecución automática por CRON.').'</li>
+        <li>'.$this->l('El envío manual no aplica la ventana de 48 h. Puedes usarlo desde:').'
+          <a href="'.htmlspecialchars($manualLink).'" target="_blank">'.$this->l('Envío manual de recordatorios').'</a>.
+        </li>
+      </ul>
+    </div>';
+
+    return $html;
+}
+
 
     /* =======================================
      * Hook: inyección de variables para email

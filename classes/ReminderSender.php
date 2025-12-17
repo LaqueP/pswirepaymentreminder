@@ -22,6 +22,9 @@ class ReminderSender
 
     protected $afterState = 0;
 
+    /** Ventana de “recencia” que aplica SOLO a la CRON (en horas). */
+    protected $cronRecentHours = 48;
+
     public function __construct(\Pswirepaymentreminder $module)
     {
         $this->module = $module;
@@ -34,15 +37,17 @@ class ReminderSender
 
     /**
      * Procesa envíos:
-     * - Si $idsOrders es null → modo automático (usa horas/estados/fecha límite)
-     * - Si es array → modo manual (solo esos IDs; respeta lógica de tienda/estado posterior)
+     * - Si $idsOrders es null → modo automático (usa horas/estados/fecha límite + ventana 48h + check “sin otros pedidos recientes”)
+     * - Si es array → modo manual (solo esos IDs; respeta lógica de tienda/estado posterior, SIN restricciones de 48h)
      */
     public function process(array $idsOrders = null): array
     {
         $sent = 0; $skipped = 0; $reason = '';
 
-        if ($idsOrders === null) {
-            // Automático: buscar pedidos por estados + tiempo + fecha límite (hasta)
+        $automatic = ($idsOrders === null);
+
+        if ($automatic) {
+            // Automático: buscar pedidos por estados + tiempo + fecha límite (hasta) + “creados en últimas 48h”
             $idShop = (int)Context::getContext()->shop->id;
             $hours  = (int)Configuration::get(\Pswirepaymentreminder::CFG_HOURS, null, null, $idShop);
             $statesJson = Configuration::get(\Pswirepaymentreminder::CFG_STATES, null, null, $idShop) ?: '[]';
@@ -52,21 +57,23 @@ class ReminderSender
                 return ['sent'=>0,'skipped'=>0,'reason'=>'No states configured'];
             }
 
-            // NUEVO: límite superior por fecha (hasta la fecha incluida)
+            // Límite superior por fecha (hasta la fecha incluida)
             $maxDate = trim((string)Configuration::get(\Pswirepaymentreminder::CFG_MAX_DATE, null, null, $idShop));
-            $dateClause = '';
+            $dateMaxClause = '';
             if ($maxDate !== '' && \Validate::isDate($maxDate)) {
-                $dateClause = " AND o.date_add <= '".pSQL(substr($maxDate, 0, 10))." 23:59:59'";
-                // Alternativa equivalente:
-                // $dateClause = " AND o.date_add < DATE_ADD('".pSQL(substr($maxDate, 0, 10))."', INTERVAL 1 DAY)";
+                $dateMaxClause = " AND o.date_add <= '".pSQL(substr($maxDate, 0, 10))." 23:59:59'";
             }
+
+            // NUEVO: limitar a pedidos creados en las últimas N horas (48h)
+            $dateMinClause = " AND o.date_add >= DATE_SUB(NOW(), INTERVAL ".(int)$this->cronRecentHours." HOUR)";
 
             $sql = 'SELECT o.id_order
                     FROM '._DB_PREFIX_.'orders o
                     WHERE o.current_state IN ('.implode(',', $idsStates).')
                       AND o.id_shop='.(int)$idShop.'
-                      AND TIMESTAMPDIFF(HOUR, o.date_add, NOW()) >= '.(int)$hours.
-                      $dateClause.'
+                      AND TIMESTAMPDIFF(HOUR, o.date_add, NOW()) >= '.(int)$hours
+                      .$dateMinClause
+                      .$dateMaxClause.'
                     ORDER BY o.date_add ASC
                     LIMIT 500';
 
@@ -88,6 +95,22 @@ class ReminderSender
             $afterState = $this->afterState;
             if (!$afterState) {
                 $afterState = (int)Configuration::get(\Pswirepaymentreminder::CFG_AFTER_STATE, null, null, (int)$order->id_shop);
+            }
+
+            // SOLO en CRON: descartar si el cliente tiene OTROS pedidos en las últimas 48h
+            if ($automatic) {
+                $hasOtherRecent = (bool)Db::getInstance()->getValue(
+                    'SELECT COUNT(1)
+                     FROM '._DB_PREFIX_.'orders o2
+                     WHERE o2.id_customer = '.(int)$order->id_customer.'
+                       AND o2.id_shop = '.(int)$order->id_shop.'
+                       AND o2.id_order <> '.(int)$order->id.'
+                       AND o2.date_add >= DATE_SUB(NOW(), INTERVAL '.(int)$this->cronRecentHours.' HOUR)'
+                );
+                if ($hasOtherRecent) {
+                    $skipped++;
+                    continue;
+                }
             }
 
             // Variables de plantilla (todas, incluyendo bankwire + urgency)
